@@ -473,3 +473,57 @@ code {
     margin-left: auto;
   }
 }
+
+/* ---- Pedidos ---- */
+.sel-estado {
+  width: auto;
+  min-width: 190px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  border-radius: 999px;
+}
+
+.sel-estado.estado-apartada {
+  color: var(--acento);
+}
+
+.sel-estado.estado-pedido_miami {
+  color: #8ab4ff;
+}
+
+.sel-estado.estado-bodega_miami {
+  color: #e59bff;
+}
+
+.sel-estado.estado-bodega_bogota {
+  color: #5fd3d3;
+}
+
+.etiqueta.estado-finalizada {
+  color: var(--pos);
+}
+
+.enlace {
+  display: block;
+  background: none;
+  border: 0;
+  padding: 2px 0 0;
+  color: var(--suave);
+  font: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.enlace:hover {
+  color: var(--texto);
+}
+
+input:disabled {
+  opacity: 0.6;
+}
+
+.tabla-wrap td .sub {
+  white-space: normal;
+  max-width: 260px;
+}

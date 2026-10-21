@@ -3,13 +3,19 @@ import { supabase, configurado } from './lib/supabase'
 import Dashboard from './components/Dashboard'
 import Ventas from './components/Ventas'
 import VentaForm from './components/VentaForm'
+import Pedidos from './components/Pedidos'
+import PedidoForm from './components/PedidoForm'
+import { estadoLabel } from './lib/format'
 
 export default function App() {
   const [vista, setVista] = useState('panel')
   const [ventas, setVentas] = useState([])
+  const [pedidos, setPedidos] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
+  const [errorPedidos, setErrorPedidos] = useState('')
   const [form, setForm] = useState(null) // null = cerrado, {} = nueva, {...} = editar
+  const [formPedido, setFormPedido] = useState(null)
 
   const cargar = useCallback(async () => {
     if (!configurado) {
@@ -31,9 +37,24 @@ export default function App() {
     setCargando(false)
   }, [])
 
+  const cargarPedidos = useCallback(async () => {
+    if (!configurado) return
+    const { data, error } = await supabase
+      .from('pedidos')
+      .select('*')
+      .order('created_at', { ascending: false })
+    if (error) {
+      setErrorPedidos(error.message)
+    } else {
+      setErrorPedidos('')
+      setPedidos(data)
+    }
+  }, [])
+
   useEffect(() => {
     cargar()
-  }, [cargar])
+    cargarPedidos()
+  }, [cargar, cargarPedidos])
 
   async function guardar(payload, id) {
     const consulta = id
@@ -51,6 +72,46 @@ export default function App() {
     const { error } = await supabase.from('ventas').delete().eq('id', venta.id)
     if (error) window.alert(error.message)
     else cargar()
+  }
+
+  async function guardarPedido(payload, id) {
+    const consulta = id
+      ? supabase.from('pedidos').update(payload).eq('id', id)
+      : supabase.from('pedidos').insert(payload)
+    const { error } = await consulta
+    if (error) return error.message
+    await cargarPedidos()
+    setFormPedido(null)
+    return null
+  }
+
+  async function cambiarEstado(pedido, estado) {
+    if (estado === pedido.estado) return
+    if (estado === 'finalizada') {
+      const ok = window.confirm(
+        `¿Marcar "${pedido.nombre}" como ${estadoLabel(estado)}?\n\n` +
+          'Se creará automáticamente una venta y el pedido ya no se podrá modificar.',
+      )
+      if (!ok) {
+        await cargarPedidos() // restablece el selector
+        return
+      }
+    }
+    const { error } = await supabase.from('pedidos').update({ estado }).eq('id', pedido.id)
+    if (error) window.alert(error.message)
+    // si se finalizó, la venta nueva debe aparecer también en Ventas y en el Panel
+    await Promise.all([cargarPedidos(), estado === 'finalizada' ? cargar() : Promise.resolve()])
+  }
+
+  async function eliminarPedido(pedido) {
+    const aviso =
+      pedido.estado === 'finalizada'
+        ? ' La venta que se creó a partir de este pedido NO se elimina.'
+        : ''
+    if (!window.confirm(`¿Eliminar el pedido "${pedido.nombre}"?${aviso} Esta acción no se puede deshacer.`)) return
+    const { error } = await supabase.from('pedidos').delete().eq('id', pedido.id)
+    if (error) window.alert(error.message)
+    else cargarPedidos()
   }
 
   if (!configurado) {
@@ -82,6 +143,9 @@ export default function App() {
           <button className={vista === 'ventas' ? 'tab activo' : 'tab'} onClick={() => setVista('ventas')}>
             Ventas
           </button>
+          <button className={vista === 'pedidos' ? 'tab activo' : 'tab'} onClick={() => setVista('pedidos')}>
+            Pedidos
+          </button>
         </nav>
         <button className="btn primario" onClick={() => setForm({})}>
           + Nueva venta
@@ -97,7 +161,17 @@ export default function App() {
             </button>
           </div>
         )}
-        {cargando && ventas.length === 0 ? (
+        {vista === 'pedidos' ? (
+          <Pedidos
+            pedidos={pedidos}
+            error={errorPedidos}
+            onNuevo={() => setFormPedido({})}
+            onEditar={setFormPedido}
+            onEliminar={eliminarPedido}
+            onCambiarEstado={cambiarEstado}
+            onVerVentas={() => setVista('ventas')}
+          />
+        ) : cargando && ventas.length === 0 ? (
           <p className="vacio">Cargando…</p>
         ) : vista === 'panel' ? (
           <Dashboard ventas={ventas} onVerVentas={() => setVista('ventas')} />
@@ -107,6 +181,9 @@ export default function App() {
       </main>
 
       {form && <VentaForm inicial={form} onCerrar={() => setForm(null)} onGuardar={guardar} />}
+      {formPedido && (
+        <PedidoForm inicial={formPedido} onCerrar={() => setFormPedido(null)} onGuardar={guardarPedido} />
+      )}
     </div>
   )
 }

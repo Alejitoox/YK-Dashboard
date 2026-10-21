@@ -13,6 +13,22 @@ Dashboard para registrar y consultar ventas de ropa, boletas de conciertos y otr
   - Boletas: evento/concierto, fecha del evento, ciudad, localidad, cantidad, precio de compra y venta.
   - Cliente (nombre y contacto) y notas en todos los tipos.
 
+### Pedidos (ropa importada)
+
+Apartado para seguir los encargos de clientes. Botón **Nuevo pedido** con: fecha de venta, nombre de la prenda, marca, talla, precio de compra, precio de venta, precio de envío, cliente, contacto y notas (el tipo es siempre Ropa).
+
+El estado se cambia a mano desde la lista:
+
+1. Prenda apartada (50%)
+2. Pedido hecho a Miami
+3. Pedido en bodega Miami
+4. Pedido en bodega Bogotá
+5. Venta finalizada
+
+Al pasar un pedido a **Venta finalizada** la base de datos crea sola la venta (tipo ropa, cantidad 1, con los mismos datos y la **fecha de venta del pedido**), una única vez. Un pedido finalizado queda bloqueado: si algo estaba mal, se corrige en la venta. Los pedidos en curso **no** suman al Panel hasta que se finalizan.
+
+**Para activarlo:** ejecuta `supabase/pedidos.sql` en Supabase → SQL Editor → Run (una sola vez), antes o después de desplegar.
+
 ### Cómo se calcula
 
 - Los precios de compra y venta de boletas/otros son **por unidad** (se multiplican por la cantidad). El envío es un valor total.

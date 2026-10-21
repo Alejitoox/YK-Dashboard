@@ -4,6 +4,17 @@ export const TIPOS = {
   otro: 'Otros',
 }
 
+// Estados de un pedido, en orden. Al llegar a 'finalizada' la base de datos crea la venta.
+export const ESTADOS = [
+  { id: 'apartada', label: 'Prenda apartada (50%)' },
+  { id: 'pedido_miami', label: 'Pedido hecho a Miami' },
+  { id: 'bodega_miami', label: 'Pedido en bodega Miami' },
+  { id: 'bodega_bogota', label: 'Pedido en bodega Bogotá' },
+  { id: 'finalizada', label: 'Venta finalizada' },
+]
+
+export const estadoLabel = (id) => ESTADOS.find((e) => e.id === id)?.label || id
+
 const copFmt = new Intl.NumberFormat('es-CO', {
   style: 'currency',
   currency: 'COP',
